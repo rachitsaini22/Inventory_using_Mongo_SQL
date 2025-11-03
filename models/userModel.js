@@ -1,10 +1,10 @@
 import pool from "../connections/db.js";
 
 // creating the new user while sign up 
-export const insertUser = (name, email, password, callback) => {
+export const insertUser = (name, email, password, role, callback) => {
   pool.query(
-    "INSERT INTO Users (name, email, password) VALUES (?, ?, ?)",
-    [name, email, password],
+    "INSERT INTO Users (name, email, password, role) VALUES (?, ?, ?, ?)",
+    [name, email, password, role],
     callback
   );
 };

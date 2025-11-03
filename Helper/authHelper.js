@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-// Hash password before saving
+// password hashing
 export const hashPassword = (password, callback) => {
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) return callback(err);
@@ -9,7 +9,7 @@ export const hashPassword = (password, callback) => {
   });
 };
 
-// Compare entered password with hashed one
+// in this we are compare the passwords 
 export const comparePassword = (plainPassword, hashedPassword, callback) => {
   bcrypt.compare(plainPassword, hashedPassword, (err, match) => {
     if (err) return callback(err);
@@ -17,14 +17,20 @@ export const comparePassword = (plainPassword, hashedPassword, callback) => {
   });
 };
 
-// Generate JWT token
+// genrating token 
 export const generateToken = (user, callback) => {
   try {
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT, // secret key from .env
-      { expiresIn: "1h" }
-    );
+    //this is the payload in object form 
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role, 
+    };
+
+    const token = jwt.sign(payload, process.env.JWT, {
+      expiresIn: "1h",
+    });
+
     callback(null, token);
   } catch (err) {
     callback(err);

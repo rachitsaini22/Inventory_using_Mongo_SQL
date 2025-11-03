@@ -1,10 +1,10 @@
 import pool from "../connections/db.js";
 
 // this query will store the session id when the user will login to the application 
-export const createSession = (userId, token, deviceInfo, callback) => {
+export const createSession = (userId, token,  callback) => {
   pool.query(
-    "INSERT INTO Sessions (user_id, token, device_info) VALUES (?, ?, ?)",
-    [userId, token, deviceInfo],
+    "INSERT INTO Sessions (user_id, token) VALUES (?, ?)",
+    [userId, token],
     callback
   );
 };

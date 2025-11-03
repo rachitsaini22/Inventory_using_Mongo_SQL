@@ -24,13 +24,15 @@ import { sendError,
 
 // SIGNUP
 export const signupUser = (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password)
+  const { name, email, password, role } = req.body; //  added 'role'
+  if (!name || !email || !password || !role)
     return sendError(res, "All fields are required", 400);
 
   hashPassword(password, (err, hashedPassword) => {
     if (err) return sendError(res, "Error encrypting password");
-    insertUser(name, email, hashedPassword, (err2) => {
+
+    // 🟢 store role also in the SQL table
+    insertUser(name, email, hashedPassword, role, (err2) => {
       if (err2) return sendError(res, "Error saving user");
       sendSuccess(res, "User registered successfully!");
     });
@@ -38,8 +40,10 @@ export const signupUser = (req, res) => {
 };
 
 //LOGIN
+
 export const loginUser = (req, res) => {
-  const { email, password, device_info } = req.body;
+  const { email, password } = req.body;
+
   if (!email || !password)
     return sendError(res, "Email and password required", 400);
 
@@ -47,35 +51,43 @@ export const loginUser = (req, res) => {
     if (err) return sendError(res, "Database error");
     if (results.length === 0) return sendError(res, "User not found", 404);
 
-    const user = results[0];
+    const user = results[0];// in this user file we have all the data of the current user and we can access it 
+   
+    
     comparePassword(password, user.password, (err2, match) => {
       if (err2) return sendError(res, "Error checking password");
       if (!match) return sendError(res, "Incorrect password", 401);
 
-      generateToken(user, (err3, token) => {
+      // this is the payload that contains the id email and role 
+      const payload = {
+        id: user.id,
+        email: user.email,
+        role: user.role, 
+      };
+
+      generateToken(payload, (err3, token) => {
         if (err3) return sendError(res, "Error generating token");
 
         getUserSessions(user.id, (err4, sessions) => {
           if (err4) return sendError(res, "Error fetching sessions");
 
           const proceed = () => {
-            createSession(
-              user.id,
-              token,
-              device_info || "unknown",
-              (err5) => {
-                if (err5) return sendError(res, "Error creating session");
+            createSession(user.id, token || "unknown", (err5) => {
+              if (err5) return sendError(res, "Error creating session");
 
-                res.cookie("token", token, {
-                  httpOnly: true,
-                  secure: false,
-                  sameSite: "strict",
-                  maxAge: 3600000,
-                });
+              res.cookie("token", token, {
+                httpOnly: true,
+                secure: false,
+                sameSite: "strict",
+                maxAge: 3600000, // 1 hour
+              });
 
-                sendSuccess(res, `Welcome ${user.name}! You are logged in.`);
-              }
-            );
+              //now we can send the success message 
+              sendSuccess(res, `Welcome ${user.name}! You are logged in as ${user.role}.`, {
+                token,
+                role: user.role,
+              });
+            });
           };
 
           // If user already has 2 active sessions, delete the oldest one
@@ -90,6 +102,7 @@ export const loginUser = (req, res) => {
   });
 };
 
+
 //GET ALL USERS
 export const getAllUsers = (req, res) => {
   getAllUsersDB((err, results) => {
@@ -103,7 +116,7 @@ export const getAllUsers = (req, res) => {
 //UPDATE USER
 export const updateUser = (req, res) => {
   const id = req.user.id;
-  const { name } = req.body;
+  const  name  = req.body.name;
 
   updateUserDB(name, id, (err) => {
     if (err) return sendError(res, "Error updating user");
