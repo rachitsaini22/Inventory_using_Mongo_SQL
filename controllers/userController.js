@@ -23,122 +23,135 @@ import { sendError,
   sendSuccess } from "../Helper/responseHelper.js";
 
 // SIGNUP
-export const signupUser = (req, res) => {
-  const { name, email, password, role } = req.body; //  added 'role'
-  if (!name || !email || !password || !role)
-    return sendError(res, "All fields are required", 400);
+export const signupUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, role } = req.body;
 
-  hashPassword(password, (err, hashedPassword) => {
-    if (err) return sendError(res, "Error encrypting password");
+    // Validate inputs
+    if (!name || !email || !password || !role || !phone) {
+      return sendError(res, "All fields are required", 400);
+    }
 
-    // 🟢 store role also in the SQL table
-    insertUser(name, email, hashedPassword, role, (err2) => {
-      if (err2) return sendError(res, "Error saving user");
-      sendSuccess(res, "User registered successfully!");
-    });
-  });
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+
+    // Insert new user into SQL
+    const result = await insertUser(name, email, phone, hashedPassword, role);
+
+    if (!result || result.affectedRows === 0) {
+      return sendError(res, "Failed to register user");
+    }
+
+    // Success
+    return sendSuccess(res, "User registered successfully!");
+  } catch (err) {
+    console.error("Signup error:", err);
+    return sendError(res, "Error saving user");
+  }
 };
 
 //LOGIN
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-export const loginUser = (req, res) => {
-  const { email, password } = req.body;
+    if (!email || !password)
+      return sendError(res, "Email and password required", 400);
 
-  if (!email || !password)
-    return sendError(res, "Email and password required", 400);
+    // 🟢 Fetch user by email
+    const [user] = await findUserByEmail(email);
+    if (!user) return sendError(res, "User not found", 404);
 
-  findUserByEmail(email, (err, results) => {
-    if (err) return sendError(res, "Database error");
-    if (results.length === 0) return sendError(res, "User not found", 404);
+    console.log("✅ User found:", user.name);
 
-    const user = results[0];// in this user file we have all the data of the current user and we can access it 
-   
-    
-    comparePassword(password, user.password, (err2, match) => {
-      if (err2) return sendError(res, "Error checking password");
-      if (!match) return sendError(res, "Incorrect password", 401);
+    // 🟢 Compare password
+    const match = await comparePassword(password, user.password);
+    if (!match) return sendError(res, "Incorrect password", 401);
 
-      // this is the payload that contains the id email and role 
-      const payload = {
-        id: user.id,
-        email: user.email,
-        role: user.role, 
-      };
+    // 🟢 Create payload
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
 
-      generateToken(payload, (err3, token) => {
-        if (err3) return sendError(res, "Error generating token");
+    // 🟢 Generate token
+    const token = await generateToken(payload);
 
-        getUserSessions(user.id, (err4, sessions) => {
-          if (err4) return sendError(res, "Error fetching sessions");
+    // 🟢 Fetch active sessions
+    const sessions = await getUserSessions(user.id);
 
-          const proceed = () => {
-            createSession(user.id, token || "unknown", (err5) => {
-              if (err5) return sendError(res, "Error creating session");
+    // 🟢 If user already has 2 active sessions, delete the oldest one
+    if (sessions && sessions.length >= 2) {
+      await deleteSession(sessions[0].id);
+    }
 
-              res.cookie("token", token, {
-                httpOnly: true,
-                secure: false,
-                sameSite: "strict",
-                maxAge: 3600000, // 1 hour
-              });
+    // 🟢 Create a new session
+    await createSession(user.id, token || "unknown");
 
-              //now we can send the success message 
-              sendSuccess(res, `Welcome ${user.name}! You are logged in as ${user.role}.`, {
-                token,
-                role: user.role,
-              });
-            });
-          };
-
-          // If user already has 2 active sessions, delete the oldest one
-          if (sessions && sessions.length >= 2) {
-            deleteSession(sessions[0].id, () => proceed());
-          } else {
-            proceed();
-          }
-        });
-      });
+    // 🟢 Send the cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 3600000, // 1 hour
     });
-  });
+
+    // 🟢 Send success response
+    return sendSuccess(res, `Welcome ${user.name}! You are logged in as ${user.role}.`, {
+      token,
+      role: user.role,
+    });
+
+  } catch (error) {
+    console.error("❌ Error in loginUser:", error);
+    return sendError(res, "Internal server error", 500);
+  }
 };
 
-
-//GET ALL USERS
-export const getAllUsers = (req, res) => {
-  getAllUsersDB((err, results) => {
-    if (err) return sendError(res, "Error fetching users");
+// ✅ GET ALL USERS
+export const getAllUsers = async (req, res) => {
+  try {
+    const results = await getAllUsersDB();
     sendSuccess(res, "Users fetched successfully", results);
-  });
+  } catch (err) {
+    sendError(res, "Error fetching users");
+  }
 };
 
+// ✅ UPDATE USER
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.user; // Comes from middleware (decoded token)
+    const { name, phone } = req.body; // You can add more fields as needed
 
+    if (!name && !phone)
+      return sendError(res, "No fields provided for update", 400);
 
-//UPDATE USER
-export const updateUser = (req, res) => {
-  const id = req.user.id;
-  const  name  = req.body.name;
-
-  updateUserDB(name, id, (err) => {
-    if (err) return sendError(res, "Error updating user");
+    await updateUserDB(name, phone, id);
     sendSuccess(res, "User updated successfully!");
-  });
+  } catch (err) {
+    sendError(res, "Error updating user");
+  }
 };
 
-//DELETE USER
-export const deleteUser = (req, res) => {
-  const id = req.user.id;
-
-  deleteUserDB(id, (err) => {
-    if (err) return sendError(res, "Error deleting user");
+// ✅ DELETE USER
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.user;
+    await deleteUserDB(id);
     sendSuccess(res, "User deleted successfully!");
-  });
+  } catch (err) {
+    sendError(res, "Error deleting user");
+  }
 };
 
-//LOGOUT
-export const logoutuser = (req, res) => {
+// ✅ LOGOUT USER
+export const logoutUser = (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 0,
   });

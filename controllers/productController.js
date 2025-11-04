@@ -4,22 +4,23 @@ import Product from "../schema/productSchema.js";
 
 export const createProduct = async (req, res) => {
   try {
-    const { product_name, price, quantity, seller_name, category, product_id } = req.body;
+    const { product_name, price, quantity,  category } = req.body;
 
-    if (!product_name || !price || !quantity || !seller_name || !category || !product_id) {
+    if (!product_name || !price || !quantity || !category ) {
       return sendError(res, "All fields are required", 400);
     }
 
     const newProduct = new Product({
-      product_id,
       product_name,
       price,
       quantity,
-      seller_name,
       category,
+      seller_email: req.user.email,
+      seller_name: req.user.name,
       seller_id: req.user.id
     });
-
+   console.log(req.user.name , req.user.email);
+   
     await newProduct.save();
     sendSuccess(res, "Product added successfully", newProduct);
   } catch (err) {
@@ -36,21 +37,28 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
-// UPDATE PRODUCT
 export const updateProduct = async (req, res) => {
   try {
-    const  product_id  = req.params;
+    const { product_id } = req.params; // ✅ correctly extract param
     const updates = req.body;
 
+    // Check if request body is empty
+    if (Object.keys(updates).length === 0) {
+      return sendError(res, "No fields to update", 400);
+    }
+
+    // Find and update product
     const updated = await Product.findOneAndUpdate(
       { product_id },
-        updates,
+      { $set: updates }, // ✅ use $set to only update provided fields
       { new: true }
     );
 
     if (!updated) return sendError(res, "Product not found", 404);
+
     sendSuccess(res, "Product updated successfully", updated);
   } catch (err) {
+    console.error(err);
     sendError(res, "Error updating product");
   }
 };

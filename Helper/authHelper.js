@@ -1,38 +1,39 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-// password hashing
-export const hashPassword = (password, callback) => {
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) return callback(err);
-    callback(null, hashedPassword);
-  });
-};
-
-// in this we are compare the passwords 
-export const comparePassword = (plainPassword, hashedPassword, callback) => {
-  bcrypt.compare(plainPassword, hashedPassword, (err, match) => {
-    if (err) return callback(err);
-    callback(null, match);
-  });
-};
-
-// genrating token 
-export const generateToken = (user, callback) => {
+// ✅ Hash password
+export const hashPassword = async (password) => {
   try {
-    //this is the payload in object form 
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return hashedPassword;
+  } catch (err) {
+    throw new Error("Error hashing password");
+  }
+};
+
+// ✅ Compare plain text and hashed password
+export const comparePassword = async (plainPassword, hashedPassword) => {
+  try {
+    const match = await bcrypt.compare(plainPassword, hashedPassword);
+    return match;
+  } catch (err) {
+    throw new Error("Error comparing passwords");
+  }
+};
+
+// ✅ Generate JWT token
+export const generateToken = async (user) => {
+  try {
     const payload = {
       id: user.id,
+      name: user.name,
       email: user.email,
-      role: user.role, 
+      role: user.role,
     };
 
-    const token = jwt.sign(payload, process.env.JWT, {
-      expiresIn: "1h",
-    });
-
-    callback(null, token);
+    const token = jwt.sign(payload, process.env.JWT, { expiresIn: "1h" });
+    return token;
   } catch (err) {
-    callback(err);
+    throw new Error("Error generating token");
   }
 };

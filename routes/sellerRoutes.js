@@ -4,9 +4,10 @@ import {
   getAllSellers,
   updateSeller,
   deleteSeller,
+  getSellerOrders,
 } from "../controllers/sellerController.js";
 import { auth } from "../middlewares/verifyToken.js";
-import { isAdmin, isSeller } from "../middlewares/roleAuth.js";
+import { isAdmin, isSeller, isSellerOrAdmin } from "../middlewares/roleAuth.js";
 
 const router = express.Router();
 //only seller can create the seller profile
@@ -16,6 +17,6 @@ router.get("/all", auth, isAdmin, getAllSellers);
 // only seller can update the seller details                          
 router.put("/update/:id", auth, isSeller, updateSeller);     
 // only admin can delete any seller with the help of seller id 
-router.delete("/delete/:id", auth, isAdmin, deleteSeller); 
-
+router.delete("/delete/:id", auth, isSellerOrAdmin , deleteSeller); 
+router.get("/seller/orders",auth, getSellerOrders);
 export default router;

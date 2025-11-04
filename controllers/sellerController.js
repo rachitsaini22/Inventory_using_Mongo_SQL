@@ -1,9 +1,9 @@
 import {
   insertSeller,
   getAllSellersDB,
-  
   updateSellerDB,
   deleteSellerDB,
+  getOrdersBySellerId,
 } from "../models/sellerModel.js";
 
 import { sendError, sendSuccess } from "../Helper/responseHelper.js";
@@ -21,7 +21,21 @@ export const createSeller = (req, res) => {
     sendSuccess(res, "Seller profile created successfully!");
   });
 };
+//seller orders
+export const getSellerOrders = async (req, res) => {
+  try {
+    const sellerId = req.user.id; // from token middleware
+    const orders = await getOrdersBySellerId(sellerId);
 
+    if (orders.length === 0)
+      return sendSuccess(res, "No orders found for this seller", []);
+
+    sendSuccess(res, "Orders fetched successfully", orders);
+  } catch (error) {
+    console.error("Error fetching seller orders:", error);
+    sendError(res, "Error fetching seller orders");
+  }
+};
 // GET ALL SELLERS (Admin only)
 export const getAllSellers = (req, res) => {
   getAllSellersDB((err, results) => {

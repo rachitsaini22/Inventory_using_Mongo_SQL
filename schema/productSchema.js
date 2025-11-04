@@ -1,17 +1,28 @@
 import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid"; // install: npm install uuid
+
 
 const productSchema = new mongoose.Schema(
   {
     product_id: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true
+    type: String,
+    default: () => "PROD-" + uuidv4().split("-")[0],
+    unique: true,
     },
     product_name: {
       type: String,
       required: true
     },
+    seller_name: {
+      type: String,
+      required: true
+    },
+    seller_email: {
+  type: String,
+  required: true,
+  trim: true
+},
+
     price: {
       type: Number,
       required: true
