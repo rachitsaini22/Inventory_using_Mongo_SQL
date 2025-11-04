@@ -1,59 +1,76 @@
 import { sendError, sendSuccess } from "../Helper/responseHelper.js";
-import Product from "../schema/productSchema.js";
+import {
+  createProductModel,
+  getAllProductsModel,
+  updateProductModel,
+  deleteProductModel,
+} from "../models/productModel.js";
 
-
+// CREATE PRODUCT
 export const createProduct = async (req, res) => {
   try {
-    const { product_name, price, quantity,  category } = req.body;
+    const { product_name, price, quantity, category } = req.body;
 
-    if (!product_name || !price || !quantity || !category ) {
+    if (!product_name || !price || !quantity || !category) {
       return sendError(res, "All fields are required", 400);
     }
 
-    const newProduct = new Product({
+    const productData = {
       product_name,
       price,
       quantity,
       category,
       seller_email: req.user.email,
       seller_name: req.user.name,
-      seller_id: req.user.id
-    });
-   console.log(req.user.name , req.user.email);
-   
-    await newProduct.save();
+      seller_id: req.user.id,
+    };
+
+    const newProduct = await createProductModel(productData);
     sendSuccess(res, "Product added successfully", newProduct);
   } catch (err) {
+    console.error(err);
     sendError(res, err.message || "Error adding product");
   }
 };
+
 // GET ALL PRODUCTS
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}, { _id: 0,createdAt :0 });
-    sendSuccess(res, "Products fetched successfully", products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const minPrice = parseFloat(req.query.minPrice) || 0;
+    const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
+    const category = req.query.category;
+
+    const filter = { price: { $gte: minPrice, $lte: maxPrice } };
+    if (category) filter.category = category;
+
+    const { products, total } = await getAllProductsModel(filter, skip, limit);
+
+    sendSuccess(res, "Products fetched successfully", {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      products,
+    });
   } catch (err) {
+    console.error(err);
     sendError(res, "Error fetching products");
   }
 };
 
+// UPDATE PRODUCT
 export const updateProduct = async (req, res) => {
   try {
-    const { product_id } = req.params; // ✅ correctly extract param
+    const { product_id } = req.params;
     const updates = req.body;
 
-    // Check if request body is empty
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0)
       return sendError(res, "No fields to update", 400);
-    }
 
-    // Find and update product
-    const updated = await Product.findOneAndUpdate(
-      { product_id },
-      { $set: updates }, // ✅ use $set to only update provided fields
-      { new: true }
-    );
-
+    const updated = await updateProductModel(product_id, updates);
     if (!updated) return sendError(res, "Product not found", 404);
 
     sendSuccess(res, "Product updated successfully", updated);
@@ -67,12 +84,12 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { product_id } = req.params;
+    const deleted = await deleteProductModel(product_id);
 
-    const deleted = await Product.findOneAndDelete({ product_id });
     if (!deleted) return sendError(res, "Product not found", 404);
-
     sendSuccess(res, "Product deleted successfully");
   } catch (err) {
+    console.error(err);
     sendError(res, "Error deleting product");
   }
 };
