@@ -58,17 +58,17 @@ export const loginUser = async (req, res) => {
     if (!email || !password)
       return sendError(res, "Email and password required", 400);
 
-    // 🟢 Fetch user by email
+    // Fetch user by email
     const [user] = await findUserByEmail(email);
     if (!user) return sendError(res, "User not found", 404);
 
-    console.log("✅ User found:", user.name);
+    console.log("User found:", user.name);
 
-    // 🟢 Compare password
+    // Compare password
     const match = await comparePassword(password, user.password);
     if (!match) return sendError(res, "Incorrect password", 401);
 
-    // 🟢 Create payload
+    // Create payload
     const payload = {
       id: user.id,
       name: user.name,
@@ -76,21 +76,21 @@ export const loginUser = async (req, res) => {
       role: user.role,
     };
 
-    // 🟢 Generate token
+    //  Generate token
     const token = await generateToken(payload);
 
-    // 🟢 Fetch active sessions
+    //  Fetch active sessions
     const sessions = await getUserSessions(user.id);
 
-    // 🟢 If user already has 2 active sessions, delete the oldest one
+    //  If user already has 2 active sessions, delete the oldest one
     if (sessions && sessions.length >= 2) {
       await deleteSession(sessions[0].id);
     }
 
-    // 🟢 Create a new session
+    //  Create a new session
     await createSession(user.id, token || "unknown");
 
-    // 🟢 Send the cookie
+    // Send the cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
@@ -98,19 +98,16 @@ export const loginUser = async (req, res) => {
       maxAge: 3600000, // 1 hour
     });
 
-    // 🟢 Send success response
-    return sendSuccess(res, `Welcome ${user.name}! You are logged in as ${user.role}.`, {
-      token,
-      role: user.role,
-    });
+    // Send success response
+    return sendSuccess(res, `Welcome ${user.name}! You are logged in as ${user.role}.`);
 
   } catch (error) {
-    console.error("❌ Error in loginUser:", error);
+    console.error("Error in loginUser:", error);
     return sendError(res, "Internal server error", 500);
   }
 };
 
-// ✅ GET ALL USERS
+// GET ALL USERS
 export const getAllUsers = async (req, res) => {
   try {
     const results = await getAllUsersDB();
@@ -120,7 +117,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// ✅ UPDATE USER
+// UPDATE USER
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.user; // Comes from middleware (decoded token)
@@ -136,7 +133,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// ✅ DELETE USER
+//  DELETE USER
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.user;
@@ -147,7 +144,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// ✅ LOGOUT USER
+// LOGOUT USER
 export const logoutUser = (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,

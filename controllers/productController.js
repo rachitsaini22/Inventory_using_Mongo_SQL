@@ -43,9 +43,20 @@ export const getAllProducts = async (req, res) => {
     const minPrice = parseFloat(req.query.minPrice) || 0;
     const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
     const category = req.query.category;
+    const search = req.query.search?.trim(); // 🔍 Search term
 
-    const filter = { price: { $gte: minPrice, $lte: maxPrice } };
+    // Build filter
+    const filter = {
+      price: { $gte: minPrice, $lte: maxPrice },
+    };
     if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { product_name: { $regex: search, $options: "i" } }, // case-insensitive
+        { seller_name: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+      ];
+    }
 
     const { products, total } = await getAllProductsModel(filter, skip, limit);
 
@@ -56,10 +67,11 @@ export const getAllProducts = async (req, res) => {
       products,
     });
   } catch (err) {
-    console.error(err);
+    console.error("PRODUCT FETCH ERROR:", err);
     sendError(res, "Error fetching products");
   }
 };
+
 
 // UPDATE PRODUCT
 export const updateProduct = async (req, res) => {

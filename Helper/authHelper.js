@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-// ✅ Hash password
+//  Hash password
 export const hashPassword = async (password) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -11,7 +11,7 @@ export const hashPassword = async (password) => {
   }
 };
 
-// ✅ Compare plain text and hashed password
+// Compare plain text and hashed password
 export const comparePassword = async (plainPassword, hashedPassword) => {
   try {
     const match = await bcrypt.compare(plainPassword, hashedPassword);
@@ -21,7 +21,7 @@ export const comparePassword = async (plainPassword, hashedPassword) => {
   }
 };
 
-// ✅ Generate JWT token
+//  Generate JWT token
 export const generateToken = async (user) => {
   try {
     const payload = {

@@ -19,6 +19,6 @@ router.get("/all", auth, getAllProducts);
 // now seller can update the product 
 router.put("/:product_id", auth, isSeller, updateProduct);
 //seller can delete the code 
-router.delete("/delete/:product_id", auth, isSeller, deleteProduct);
+router.delete("/delete/:product_id", auth, isAdmin, deleteProduct);
 
 export default router;

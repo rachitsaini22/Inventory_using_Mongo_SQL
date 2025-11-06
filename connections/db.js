@@ -14,17 +14,17 @@ const pool = mysql
     connectionLimit: 10,
     queueLimit: 0,
   })
-  .promise(); // ✅ apply promise() directly to the pool
+  .promise(); //  apply promise() directly to the pool
 
 // Test the connection
 pool
   .getConnection()
   .then((connection) => {
-    console.log("✅ Database connected successfully");
+    console.log(" Database connected successfully");
     connection.release();
   })
   .catch((err) => {
-    console.error("❌ Database connection failed:", err);
+    console.error(" Database connection failed:", err);
   });
 
 export default pool;

@@ -57,7 +57,15 @@ export const updateSeller = (req, res) => {
 };
 
 // DELETE SELLER (Admin only)
-export const deleteSeller = (req, res) => {
+export const deleteSeller1 = (req, res) => {
+  const { id } = req.user.id;
+
+  deleteSellerDB(id, (err) => {
+    if (err) return sendError(res, "Error deleting seller");
+    sendSuccess(res, "Seller deleted successfully!");
+  });
+};
+export const deleteSeller2 = (req, res) => {
   const { id } = req.params;
 
   deleteSellerDB(id, (err) => {
@@ -65,3 +73,4 @@ export const deleteSeller = (req, res) => {
     sendSuccess(res, "Seller deleted successfully!");
   });
 };
+

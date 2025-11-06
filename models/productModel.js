@@ -6,9 +6,9 @@ export const createProductModel = async (data) => {
   return await newProduct.save();
 };
 
-// GET ALL PRODUCTS with filters and pagination
+// GET ALL PRODUCTS with filters, search, and pagination
 export const getAllProductsModel = async (filter, skip, limit) => {
-  const products = await Product.find(filter, { _id: 0, createdAt: 0 })
+  const products = await Product.find(filter, { _id: 0 })
     .skip(skip)
     .limit(limit);
   const total = await Product.countDocuments(filter);
