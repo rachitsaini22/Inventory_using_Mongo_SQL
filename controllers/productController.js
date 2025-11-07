@@ -5,31 +5,42 @@ import {
   updateProductModel,
   deleteProductModel,
 } from "../models/productModel.js";
-
+import { getCategoryByIdModel } from "../models/categoryModel.js";
 // CREATE PRODUCT
+
 export const createProduct = async (req, res) => {
   try {
-    const { product_name, price, quantity, category } = req.body;
+    const { product_name, price, quantity, category_id } = req.body;
 
-    if (!product_name || !price || !quantity || !category) {
+    if (!product_name || !price || !quantity ||  !category_id ) {
       return sendError(res, "All fields are required", 400);
     }
+    
 
+    // Fetch category details from MySQL
+    const category = await getCategoryByIdModel(category_id);
+    if (!category) {
+      return sendError(res, "Invalid category_id. Category not found.", 404);
+    }
+
+    // Add category details to product data
     const productData = {
       product_name,
+      seller_name: req.user.name,
+      seller_email: req.user.email,
+      seller_id: req.user.id,
       price,
       quantity,
-      category,
-      seller_email: req.user.email,
-      seller_name: req.user.name,
-      seller_id: req.user.id,
+      category_id: category.category_id,
+      category_name: category.category_name,
     };
 
     const newProduct = await createProductModel(productData);
-    sendSuccess(res, "Product added successfully", newProduct);
+
+    sendSuccess(res, "Product created successfully", newProduct);
   } catch (err) {
-    console.error(err);
-    sendError(res, err.message || "Error adding product");
+    console.error("CREATE PRODUCT ERROR:", err);
+    sendError(res, "Error creating product");
   }
 };
 

@@ -23,6 +23,10 @@ const productSchema = new mongoose.Schema(
   trim: true
 },
 
+seller_id: {
+  type: Number, 
+  required: true
+},
     price: {
       type: Number,
       required: true
@@ -32,12 +36,8 @@ const productSchema = new mongoose.Schema(
       required: true,
       min: 0
     },
-    seller_id: {
-      type: Number, 
-      required: true
-    },
-    category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-  category_name: { type: String }
+    category_id: {type : Number},
+    category_name: { type: String }
   },
   {
     timestamps: true 

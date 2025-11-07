@@ -20,3 +20,12 @@ export const getAllCategoriesModel = async () => {
   const [rows] = await pool.query("SELECT * FROM categories");
   return rows;
 };
+
+// Fetch category by ID
+export const getCategoryByIdModel = async (category_id) => {
+  const [rows] = await pool.query(
+    "SELECT id AS category_id, category_name FROM categories WHERE id = ?",
+    [category_id]
+  );
+  return rows[0];
+};

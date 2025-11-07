@@ -27,37 +27,19 @@ export const deleteOrderModel = async (order_id) => {
 
 
 export const getCategoryReportModel = async () => {
-  // 1️ Fetch summary per category
-  const [summaryRows] = await pool.query(`
+  const [rows] = await pool.query(`
     SELECT 
-      seller_cat AS category,
-      COUNT(id) AS total_orders,
-      SUM(quantity) AS total_quantity,
-      SUM(total_price) AS total_sales
-    FROM orders
-    GROUP BY seller_cat;
+      o.seller_cat AS category,
+      COUNT(o.id) OVER (PARTITION BY o.seller_cat) AS total_orders,
+      SUM(o.quantity) OVER (PARTITION BY o.seller_cat) AS total_quantity,
+      SUM(o.total_price) OVER (PARTITION BY o.seller_cat) AS total_sales,
+      o.id, o.user_id, o.product_id, o.quantity, o.total_price, o.status, o.seller_id
+    FROM orders o
+    ORDER BY o.seller_cat;
   `);
-
-  // 2 Fetch all orders to attach them category-wise
-  const [orderRows] = await pool.query(`
-    SELECT id, user_id, product_id, quantity, total_price, status, seller_id, seller_cat
-    FROM orders;
-  `);
-
-  // 3️Combine both into a structured response
-  const report = summaryRows.map(cat => {
-    const orders = orderRows.filter(o => o.seller_cat === cat.category);
-    return {
-      category: cat.category,
-      total_orders: cat.total_orders,
-      total_quantity: cat.total_quantity,
-      total_sales: cat.total_sales,
-      orders, // attach all orders for this category
-    };
-  });
-
-  return report;
+  return rows;
 };
+
 
 export const getSellerReportModel = async () => {
   // 1️Fetch summary per seller
