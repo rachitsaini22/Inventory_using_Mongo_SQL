@@ -1,0 +1,173 @@
+Inventory Management System
+=============================
+
+This project is a role-based e-commerce management system that includes three types of users — Customer, Seller, and Admin.
+
+Sellers can add products to the platform and manage incoming orders. They can view customer details for each order and choose to either deliver or cancel the order.
+
+Customers can browse products, place orders, and track their purchases.
+
+Admins have complete control over the system. They can delete any user (customer or seller), remove products they find inappropriate, and monitor platform activities. Additionally, admins can view detailed reports for each seller, including sales performance and category-based reports to analyze product trends.
+
+=========================================================================================================================
+
+Tech Stack 
+============
+
+Backend : Node.js , express.js
+DB : Mongo DB ans SQL
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Dependencies are:-
+===================
+
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.2",
+    "mysql2": "^3.15.2",
+    "uuid": "^13.0.0"
+    "nodemon": "^3.1.10"
+
+Database and Schema:-
+
++------------------+
+| Tables_in_nodejs |
++-------------------
+| categories       |
+| customers        |
+| orders           |
+| seller_details   |
+| sessions         |
+| users            |
++------------------+
+
+categories 
++---------------+--------------+------+-----+-------------------+-------------------+
+| Field         | Type         | Null | Key | Default           | Extra             |
++---------------+--------------+------+-----+-------------------+-------------------+
+| id            | int          | NO   | PRI | NULL              | auto_increment    |
+| category_name | varchar(100) | NO   | UNI | NULL              |                   |
+| created_at    | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++-----------------------------------------------------------------------------------+
+
+customers  
++---------------+--------------+------+-----+-------------------+-------------------+
+| Field         | Type         | Null | Key | Default           | Extra             |
++---------------+--------------+------+-----+-------------------+-------------------+
+| id            | int          | NO   | PRI | NULL              | auto_increment    |
+| user_id       | int          | NO   | MUL | NULL              |                   |
+| full_name     | varchar(100) | NO   |     | NULL              |                   |
+| phone         | varchar(20)  | NO   |     | NULL              |                   |
+| email         | varchar(100) | NO   |     | NULL              |                   |
+| address_line1 | varchar(255) | NO   |     | NULL              |                   |
+| postal_code   | varchar(20)  | NO   |     | NULL              |                   |
+| created_at    | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++---------------+--------------+------+-----+-------------------+-------------------+
+
+ orders  :-
+ +-------------+---------------+------+-----+-------------------+-------------------+
+| Field       | Type          | Null | Key | Default           | Extra             |
++-------------+---------------+------+-----+-------------------+-------------------+
+| id          | int           | NO   | PRI | NULL              | auto_increment    |
+| user_id     | int           | NO   | MUL | NULL              |                   |
+| product_id  | varchar(50)   | NO   |     | NULL              |                   |
+| quantity    | int           | YES  |     | 1                 |                   |
+| total_price | decimal(10,2) | NO   |     | NULL              |                   |
+| status      | varchar(50)   | YES  |     | NULL              |                   |
+| created_at  | timestamp     | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
+| seller_id   | int           | YES  |     | NULL              |                   |
+| seller_cat  | varchar(100)  | YES  |     | NULL              |                   |
++-------------+---------------+------+-----+-------------------+-------------------+
+
+seller_details:-
++------------+--------------+------+-----+-------------------+-------------------+
+| Field      | Type         | Null | Key | Default           | Extra             |
++------------+--------------+------+-----+-------------------+-------------------+
+| id         | int          | NO   | PRI | NULL              | auto_increment    |
+| user_id    | int          | NO   | MUL | NULL              |                   |
+| shop_name  | varchar(255) | NO   |     | NULL              |                   |
+| location   | text         | YES  |     | NULL              |                   |
+| phone      | varchar(15)  | YES  |     | NULL              |                   |
+| created_at | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++------------+--------------+------+-----+-------------------+-------------------+
+
+
+sessions :-
+
++------------+-----------+------+-----+-------------------+-------------------+
+| Field      | Type      | Null | Key | Default           | Extra             |
++------------+-----------+------+-----+-------------------+-------------------+
+| id         | int       | NO   | PRI | NULL              | auto_increment    |
+| user_id    | int       | NO   | MUL | NULL              |                   |
+| token      | text      | NO   |     | NULL              |                   |
+| created_at | timestamp | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
+| expires_at | timestamp | YES  |     | NULL              |                   |
++------------+-----------+------+-----+-------------------+-------------------+
+
+Users :-
+
+ MySQL  localhost:33060+ ssl  nodejs  SQL > desc users ;
++-------------+------------------------------------+------+-----+-------------------+------------------------------------------------+
+| Field       | Type                               | Null | Key | Default           | Extra                                          |
++-------------+------------------------------------+------+-----+-------------------+------------------------------------------------+
+| id          | int                                | NO   | PRI | NULL              | auto_increment                                 |
+| name        | varchar(100)                       | NO   |     | NULL              |                                                |
+| email       | varchar(255)                       | NO   | UNI | NULL              |                                                |
+| phone       | varchar(15)                        | YES  |     | NULL              |                                                |
+| password    | varchar(255)                       | NO   |     | NULL              |                                                |
+| role        | enum('seller','customer','admin')  | YES  |     | customer          |                                                |
+| created_at  | timestamp                          | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED                              |
+| updated_at  | timestamp                          | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP  |
++-------------+------------------------------------+------+-----+-------------------+------------------------------------------------+
+
+
+
+API End Point :-
+
+customer
+========
+
+sign up:- http://localhost:3000/api/user/signup
+login :- http://localhost:3000/api/user/login
+customers details :- http://localhost:3000/api/customer/create
+update customers details :- http://localhost:3000/api/customer/:id
+product filters:- http://localhost:3000/api/product/all?category=Electronics
+filter with pagenation :- http://localhost:3000/api/product/all?page=1&limit=3&minPrice=5000&maxPrice=60000&category=Electronics
+search api :- GET http://localhost:3000/api/product/all?search=phone
+ordering product :- http://localhost:3000/api/order/create
+to see the order products :- http://localhost:3000/api/order/user
+to cancel the order :- http://localhost:3000/api/order/cancel
+can delete the customer :- http://localhost:3000/api/user/users/delete
+
+
+seller 
+=======
+
+seller details:-  http://localhost:3000/api/seller/create
+update the seller details :- http://localhost:3000/api/seller/update/:id
+delete the seller account :- http://localhost:3000/api/seller/delete/
+product creation :- http://localhost:3000/api/product/create
+product details update :- http://localhost:3000/api/product/PROD-e797b7f0
+delete the product :- http://localhost:3000/api/product/delete/PROD-e797b7f0
+order statuse update :- http://localhost:3000/api/order/update/:order_id
+seller can cancle the order :- http://localhost:3000/api/cancel/:order_id
+
+
+admin :- 
+
+update the admin details :- http://localhost:3000/api/user/users/update
+get all users :- http://localhost:3000/api/user/all
+get customer details :- http://localhost:3000/api/customer/
+get seller details :- http://localhost:3000/api/seller/all
+can delete the seller :- http://localhost:3000/api/seller/delete/:id
+can delete the cutomer :- http://localhost:3000/api/customer/:id
+can delete the product :- http://localhost:3000/api/product/delete/:product_id
+admin can delete his onwn id :- http://localhost:3000/api/user/users/delete
+admin can create the categories :- http://localhost:3000/api/category/add
+get the report of the seller according to seller : - http://localhost:3000/api/order/sell/report
+get the report according to category :- http://localhost:3000/api/order/cat/report
+
