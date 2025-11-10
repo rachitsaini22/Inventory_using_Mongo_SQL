@@ -171,3 +171,25 @@ admin can create the categories :- http://localhost:3000/api/category/add
 get the report of the seller according to seller : - http://localhost:3000/api/order/sell/report
 get the report according to category :- http://localhost:3000/api/order/cat/report
 
+
+
+🔐 Authentication System
+=======================
+I implemented tow types of authentication systems:-
+1. JWT Token Based Authentication
+2. Role based Authentication
+
+⚙️ Core Functionalities:-
+======================
+- User Registration and Login
+- Role-Based Access Control
+- Product Management by Sellers
+- Order Management
+- Admin Controls and Reporting
+- Secure Password Handling with Bcrypt
+- Environment Configuration with Dotenv
+- Database Interaction using Mongoose and MySQL2
+- Session Management with Cookies
+- Unique Identifier Generation with UUID
+- Development Workflow Automation with Nodemon
+=========================================================================================================================
