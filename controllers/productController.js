@@ -54,7 +54,7 @@ export const getAllProducts = async (req, res) => {
     const minPrice = parseFloat(req.query.minPrice) || 0;
     const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
     const category = req.query.category;
-    const search = req.query.search?.trim(); // 🔍 Search term
+    const search = req.query.search?.trim(); //  Search term
 
     // Build filter
     const filter = {
