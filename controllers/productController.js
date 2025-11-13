@@ -6,6 +6,7 @@ import {
   deleteProductModel,
 } from "../models/productModel.js";
 import { getCategoryByIdModel } from "../models/categoryModel.js";
+import client from "../connections/redis.js"; 
 // CREATE PRODUCT
 
 export const createProduct = async (req, res) => {
@@ -36,7 +37,7 @@ export const createProduct = async (req, res) => {
     };
 
     const newProduct = await createProductModel(productData);
-
+    await client.del("allProducts");
     sendSuccess(res, "Product created successfully", newProduct);
   } catch (err) {
     console.error("CREATE PRODUCT ERROR:", err);
@@ -44,9 +45,11 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// GET ALL PRODUCTS
+// GET ALL PRODUCTS (with Redis caching)
 export const getAllProducts = async (req, res) => {
   try {
+    console.time(" getAllProducts API Time"); // Start timer
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -54,7 +57,7 @@ export const getAllProducts = async (req, res) => {
     const minPrice = parseFloat(req.query.minPrice) || 0;
     const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
     const category = req.query.category;
-    const search = req.query.search?.trim(); //  Search term
+    const search = req.query.search?.trim();
 
     // Build filter
     const filter = {
@@ -63,25 +66,44 @@ export const getAllProducts = async (req, res) => {
     if (category) filter.category = category;
     if (search) {
       filter.$or = [
-        { product_name: { $regex: search, $options: "i" } }, // case-insensitive
+        { product_name: { $regex: search, $options: "i" } },
         { seller_name: { $regex: search, $options: "i" } },
         { category: { $regex: search, $options: "i" } },
       ];
     }
 
+    const cacheKey = `products:${JSON.stringify({ filter, page, limit })}`;
+
+    // Check Redis cache first
+    const cacheData = await client.get(cacheKey);
+    if (cacheData) {
+      console.log("Redis cache hit");
+      console.timeEnd(" getAllProducts API Time"); // End timer here
+      return sendSuccess(res, "Products fetched (from cache)", JSON.parse(cacheData));
+    }
+
+    console.log("Redis cache miss — fetching from DB");
     const { products, total } = await getAllProductsModel(filter, skip, limit);
 
-    sendSuccess(res, "Products fetched successfully", {
+    const responseData = {
       total,
       page,
       pages: Math.ceil(total / limit),
       products,
-    });
+    };
+
+    // Store data in Redis for 60 seconds
+    await client.set(cacheKey, JSON.stringify(responseData), { EX: 60 });
+
+    console.timeEnd(" getAllProducts API Time"); // End timer after DB fetch
+    sendSuccess(res, "Products fetched successfully", responseData);
   } catch (err) {
     console.error("PRODUCT FETCH ERROR:", err);
+    console.timeEnd("getAllProducts API Time");
     sendError(res, "Error fetching products");
   }
 };
+
 
 
 // UPDATE PRODUCT
@@ -95,7 +117,7 @@ export const updateProduct = async (req, res) => {
 
     const updated = await updateProductModel(product_id, updates);
     if (!updated) return sendError(res, "Product not found", 404);
-
+    await client.del("allProducts");
     sendSuccess(res, "Product updated successfully", updated);
   } catch (err) {
     console.error(err);
@@ -110,6 +132,7 @@ export const deleteProduct = async (req, res) => {
     const deleted = await deleteProductModel(product_id);
 
     if (!deleted) return sendError(res, "Product not found", 404);
+    await client.del("allProducts");
     sendSuccess(res, "Product deleted successfully");
   } catch (err) {
     console.error(err);
