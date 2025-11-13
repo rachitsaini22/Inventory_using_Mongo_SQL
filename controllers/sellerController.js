@@ -24,7 +24,7 @@ export const createSeller = (req, res) => {
 //seller orders
 export const getSellerOrders = async (req, res) => {
   try {
-    const sellerId = req.user.id; // from token middleware
+    const sellerId = req.user.id; // from token 
     const orders = await getOrdersBySellerId(sellerId);
 
     if (orders.length === 0)

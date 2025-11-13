@@ -13,7 +13,7 @@ const router = express.Router();
 router.post("/add", auth, isAdmin, createCategory);
 router.delete("/delete/:id", auth, isAdmin, deleteCategory);
 
-// 🟢 Public/User Route
+// 🟢Public/User Route
 router.get("/list", auth, getAllCategories);
 
 export default router;
